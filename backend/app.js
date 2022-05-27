@@ -33,6 +33,8 @@ mongoose.connect('mongodb+srv://ProYoxiS:26049335tr@cluster0.m5kcj.mongodb.net/?
 
 
 app.use('/api/auth', userRoutes);
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
 
 
 
