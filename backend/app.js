@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 
 // importation des routes
-const stuffRoutes = require('./routes/stuff');
+const sauceRoutes = require('./routes/sauce');
 const userRoutes = require('./routes/user');
 
 const app = express ();
@@ -28,7 +28,7 @@ mongoose.connect('mongodb+srv://ProYoxiS:26049335tr@cluster0.m5kcj.mongodb.net/?
 
 
   app.use('/api/auth', userRoutes);
-  app.use('/api/sauces', stuffRoutes);
+  app.use('/api/sauces', sauceRoutes);
   app.use('/images', express.static(path.join(__dirname, 'images')));
 
   
