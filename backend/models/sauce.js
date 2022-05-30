@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Model pour requête des sauces
 const sauceSchema = mongoose.Schema({
   userId: { type: String, required: true },
   name: { type: String, required: true },
@@ -15,17 +16,3 @@ const sauceSchema = mongoose.Schema({
 });
 
 module.exports = mongoose.model('Sauce', sauceSchema);
-
-
-// _id!: string;
-// name!: string;
-// manufacturer!: string;
-// description!: string;
-// heat!: number;
-// likes!: number;
-// dislikes!: number;
-// imageUrl!: string;
-// mainPepper!: string;
-// usersLiked!: string[];
-// usersDisliked!: string[];
-// userId!: string;
