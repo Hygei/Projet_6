@@ -46,6 +46,17 @@ exports.modifySauce = (req, res, next) => {
   // Si req.file existe (changement de l'image)
   const sauceObject = req.file ?
     {
+      // On supprime l'image précédente
+      Sauce.findOne({ _id: req.params.id })
+      .then((sauce) => {
+      // On supprime l'image et l'url associe au produit
+      const filename = sauce.imageUrl.split('/images/')[1];
+      fs.unlink(`images/${filename}`, (error) => {
+        if (error) throw error;
+      });
+    })
+    .catch(error => res.status(500).json({ error }));
+
       // On récupère les données de la requête et on génère un nouvel url
       ...JSON.parse(req.body.sauce),
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
@@ -59,8 +70,10 @@ exports.modifySauce = (req, res, next) => {
 exports.deleteSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
+      // On supprime l'image et l'url associe au produit
       const filename = sauce.imageUrl.split('/images/')[1];
       fs.unlink(`images/${filename}`, () => {
+        // On supprime le produit 
         Sauce.deleteOne({ _id: req.params.id })
           .then(() => res.status(200).json({ message: 'Objet supprimé !'}))
           .catch(error => res.status(400).json({ error }));
@@ -93,9 +106,9 @@ exports.likeSauce = (req, res, next) => {
     case 1 :
         // Pour la sauce selectionné on push l'utilsateur dans le tableau des likes et on incrémente le like de 1
         Sauce.updateOne({ _id: req.params.id }, { $push: { usersLiked: req.body.userId }, $inc: { likes: +1 }})
-          .then(() => res.status(200).json({ message: `J'aime` }))
+          .then(() => res.status(200).json({ message: `J'aime`}))
           .catch((error) => res.status(400).json({ error }))
-            
+          
       break;
 
     case 0 :
