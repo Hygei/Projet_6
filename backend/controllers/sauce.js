@@ -1,6 +1,7 @@
 // importation des functions installées
 const Sauce = require("../models/sauce");
 const fs = require("fs");
+const sauce = require("../models/sauce");
 
 // CRUD
 // Requête post
@@ -76,6 +77,7 @@ exports.modifySauce = async (req, res, next) => {
 };
 // requête delete pour 1 produit
 exports.deleteSauce = (req, res, next) => {
+  console.log(req.body);
   Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
       // On supprime l'image et l'url associe au produit
@@ -109,14 +111,24 @@ exports.likeSauce = (req, res, next) => {
     // On a 3 cas possible pour le like de la requête
     // Like 1(like) 0(neutre) -1(dislike)
     case 1:
-      // Pour la sauce selectionné on push l'utilsateur dans le tableau des likes et on incrémente le like de 1
-      Sauce.updateOne(
-        { _id: req.params.id },
-        { $push: { usersLiked: req.body.userId }, $inc: { likes: +1 } }
-      )
-        .then(() => res.status(200).json({ message: `J'aime` }))
-        .catch((error) => res.status(400).json({ error }));
-
+      // On récupère les données du produits
+      Sauce.findOne({ _id: req.params.id })
+        .then((sauce) => {
+          // Si l'utilisateur n'est pas deja dans le tableau des likes
+          if (
+            !sauce.usersLiked.includes(req.body.userId) &&
+            !sauce.usersDisliked.includes(req.body.userId)
+          ) {
+            // Pour la sauce selectionné on push l'utilsateur dans le tableau des likes et on incrémente le like de 1
+            Sauce.updateOne(
+              { _id: req.params.id },
+              { $push: { usersLiked: req.body.userId }, $inc: { likes: +1 } }
+            )
+              .then(() => res.status(200).json({ message: `J'aime` }))
+              .catch((error) => res.status(400).json({ error }));
+          }
+        })
+        .catch((error) => res.status(404).json({ error }));
       break;
 
     case 0:
@@ -152,17 +164,28 @@ exports.likeSauce = (req, res, next) => {
       break;
 
     case -1:
-      // Pour la sauce selectionné on push l'utilsateur dans le tableau des dislikes et on incrémente le dislike de 1
-      Sauce.updateOne(
-        { _id: req.params.id },
-        { $push: { usersDisliked: req.body.userId }, $inc: { dislikes: +1 } }
-      )
-        .then(() => {
-          res.status(200).json({ message: `Je n'aime pas` });
+      // On récupère les données du produits
+      Sauce.findOne({ _id: req.params.id })
+        .then((sauce) => {
+          // Si l'utilisateur n'est pas deja dans le tableau des likes
+          if (
+            !sauce.usersLiked.includes(req.body.userId) &&
+            !sauce.usersDisliked.includes(req.body.userId)
+          ) {
+            // Pour la sauce selectionné on push l'utilsateur dans le tableau des likes et on incrémente le like de 1
+            Sauce.updateOne(
+              { _id: req.params.id },
+              {
+                $push: { usersDisliked: req.body.userId },
+                $inc: { dislikes: +1 },
+              }
+            )
+              .then(() => res.status(200).json({ message: `Je n'aime pas` }))
+              .catch((error) => res.status(400).json({ error }));
+          }
         })
-        .catch((error) => res.status(400).json({ error }));
+        .catch((error) => res.status(404).json({ error }));
       break;
-
     default:
       console.log(error);
   }
