@@ -43,51 +43,60 @@ exports.getOneSauce = (req, res, next) => {
       });
     });
 };
+
 // requête put pour 1 produit
 exports.modifySauce = async (req, res, next) => {
-  try {
-    // Si req.file existe (changement de l'image)
-    if (req.file) {
-      const sauce = await Sauce.findOne({ _id: req.params.id });
-      // On supprime l'image précédente
-      const filename = sauce.imageUrl.split("/images/")[1];
-      fs.unlinkSync(`images/${filename}`);
-    }
-
-    const sauceObject = req.file
-      ? {
-          // Si il y a un fichier image dans la requête ----------------------------------
-          // On récupère les données de la requête et on génère un nouvel url
-          ...JSON.parse(req.body.sauce),
-          imageUrl: `${req.protocol}://${req.get("host")}/images/${
-            req.file.filename
-          }`,
-
-          // Sinon on mets à jour les données du produit --------------------------------------
+  Sauce.findOne({ _id: req.params.id })
+    .then((sauce) => {
+      if (sauce.userId === req.auth.userId) {
+        if (req.file) {
+          Sauce.findOne({ _id: req.params.id })
+            .then((sauce) => {
+              console.log("image delete");
+              // On supprime l'image et l'url associe au produit
+              const filename = sauce.imageUrl.split("/images/")[1];
+              fs.unlinkSync(`images/${filename}`);
+            })
+            .catch((error) => res.status(404).json({ error }));
+        } else {
+          console.log("Pas de fichier dans la requete");
         }
-      : { ...req.body };
-    await Sauce.updateOne(
-      { _id: req.params.id },
-      { ...sauceObject, _id: req.params.id }
-    );
-    return res.status(200).json({ message: "Objet modifié !" });
-  } catch (error) {
-    return res.status(500).json({ error });
-  }
+        const sauceObject = req.file
+          ? {
+              // Si il y a un fichier image dans la requête ----------------------------------
+              // On récupère les données de la requête et on génère un nouvel url
+              ...JSON.parse(req.body.sauce),
+              imageUrl: `${req.protocol}://${req.get("host")}/images/${
+                req.file.filename
+              }`,
+              // Sinon on mets à jour les données du produit --------------------------------------
+            }
+          : { ...req.body };
+        Sauce.updateOne(
+          { _id: req.params.id },
+          { ...sauceObject, _id: req.params.id }
+        )
+          .then(() => res.status(200).json({ message: "Objet modifié !" }))
+          .catch((error) => res.status(404).json({ error }));
+      }
+    })
+    .catch((error) => res.status(403).json({ error }));
 };
 // requête delete pour 1 produit
 exports.deleteSauce = (req, res, next) => {
-  console.log(req.body);
   Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
-      // On supprime l'image et l'url associe au produit
-      const filename = sauce.imageUrl.split("/images/")[1];
-      fs.unlink(`images/${filename}`, () => {
-        // On supprime le produit
-        Sauce.deleteOne({ _id: req.params.id })
-          .then(() => res.status(200).json({ message: "Objet supprimé !" }))
-          .catch((error) => res.status(400).json({ error }));
-      });
+      // Si userId de la BDD = userId du token
+      if (sauce.userId === req.auth.userId) {
+        // On supprime l'image et l'url associe au produit
+        const filename = sauce.imageUrl.split("/images/")[1];
+        fs.unlink(`images/${filename}`, () => {
+          // On supprime le produit
+          Sauce.deleteOne({ _id: req.params.id })
+            .then(() => res.status(200).json({ message: "Objet supprimé !" }))
+            .catch((error) => res.status(400).json({ error }));
+        });
+      }
     })
     .catch((error) => res.status(500).json({ error }));
 };
